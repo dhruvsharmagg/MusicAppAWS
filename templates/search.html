@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+    <meta charset="UTF-8">
+    <title>🔍 Search Results</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='search.css') }}">
+    
+</head>
+<body>
+
+    <!-- Menu for consistent navigation -->
+    <div class="nav-tabs">
+    <a href="{{ url_for('main') }}" class="tab-link">👤 User</a>
+    <a href="{{ url_for('main') }}#subscribed" class="tab-link">💚 Subscribed</a>
+    <span class="tab-link active">🔍 Search</span>
+</div>
+
+    <!-- Search results -->
+    <section style="max-width: 900px; margin: 30px auto; background: white; padding: 20px; border-radius: 12px;">
+        <div class="nav-tabs">
+            <a href="{{ url_for('main') }}" class="tab-link">⬅ Back to Dashboard</a>
+        </div>
+        <h2>Search Results</h2>
+
+        {% if songs %}
+            {% for song in songs %}
+            <div class="song-card">
+                <img src="{{ song.image_url }}" alt="Artist Image" width="150">
+                <div class="song-info">
+                    <h4>{{ song.title }}</h4>
+                    <p>by {{ song.artist }}<br>
+                    Album: {{ song.album }} | Year: {{ song.year }}</p>
+
+                    {% if song.subscribed %}
+                        <span class="subscribed">✅ Subscribed</span>
+                        <form action="/unsubscribe" method="POST" style="display: inline;">
+                            <input type="hidden" name="title" value="{{ song.title }}">
+                            <button type="submit" class="unsubscribe-btn">Unsubscribe</button>
+                        </form>
+                    {% else %}
+                        <form action="/subscribe" method="POST" style="display: inline;">
+                            <input type="hidden" name="title" value="{{ song.title }}">
+                            <input type="hidden" name="artist" value="{{ song.artist }}">
+                            <button type="submit" class="subscribe-btn">Subscribe</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>😕 No songs matched your query.</p>
+        {% endif %}
+    </section>
+
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>🎵 Music Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+
+    <!-- MENU BAR -->
+    <div class="nav-tabs">
+        <button class="tab-link active" onclick="showTab('user')">👤 User</button>
+        <button class="tab-link" onclick="showTab('subscribed')">💚 Subscribed</button>
+        <button class="tab-link" onclick="showTab('query')">🔍 Search</button>
+    </div>
+
+    <!-- USER SECTION -->
+    <section id="user" class="tab-content active">
+        <h2>Welcome, {{ user }} 🎶</h2>
+        <p>This is your music dashboard. Use the tabs above to view your subscriptions or search for new songs.</p>
+    </section>
+
+    <!-- SUBSCRIBED SECTION -->
+    <section id="subscribed" class="tab-content">
+        <h3>Your Subscribed Songs</h3>
+        {% for song in songs %}
+            {% if song.subscribed %}
+            <div class="song-card">
+                <img src="{{ song.image_url }}" alt="Artist Image" width="150">
+                <div class="song-info">
+                    <h4>{{ song.title }}</h4>
+                    <p>by {{ song.artist }}<br>
+                    Album: {{ song.album }} | Year: {{ song.year }}</p>
+                    <span class="subscribed">✅ Subscribed</span>
+                    <form action="/unsubscribe" method="POST" style="display: inline;">
+                        <input type="hidden" name="title" value="{{ song.title }}">
+                        <button type="submit" class="unsubscribe-btn">Unsubscribe</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        {% endfor %}
+        <div style="text-align: right; margin-top: 20px;">
+            <button onclick="showTab('user', event)" class="back-btn">⬅ Back to User</button>
+        </div>
+    </section>
+
+    <!-- QUERY SECTION -->
+    <section id="query" class="tab-content">
+        <h3>🔍 Search Songs</h3>
+        <form action="{{ url_for('search') }}" method="get" class="query-form">
+            <label>Title:</label>
+            <input type="text" name="title">
+
+            <label>Year:</label>
+            <input type="text" name="year">
+
+            <label>Artist:</label>
+            <input type="text" name="artist">
+
+            <label>Album:</label>
+            <input type="text" name="album">
+
+            <input type="submit" value="Query">
+        </form>
+    </section>
+
+    <!-- Tab switcher -->
+    <script>
+        function showTab(tabId) {
+            const contents = document.querySelectorAll('.tab-content');
+            const buttons = document.querySelectorAll('.tab-link');
+
+            contents.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+    </script>
+
+</body>
+</html>

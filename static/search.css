@@ -1,0 +1,91 @@
+/* Reuse the dark tabbed navbar */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f5f5f5;
+}
+
+.nav-tabs {
+    display: flex;
+    background-color: #111;
+    padding: 10px;
+}
+.nav-tabs button, .nav-tabs a {
+    background: none;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+.nav-tabs a:hover, .nav-tabs .active {
+    background-color: #333;
+}
+
+/* Page section styling */
+section {
+    max-width: 900px;
+    margin: 30px auto;
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* Song card layout */
+.song-card {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.song-card img {
+    border-radius: 8px;
+}
+
+.song-info {
+    flex: 1;
+}
+
+.song-info h4 {
+    margin: 0 0 5px 0;
+}
+
+.subscribed {
+    color: green;
+    font-weight: bold;
+}
+
+.unsubscribe-btn, .subscribe-btn {
+    background-color: #ff5555;
+    color: white;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 5px;
+}
+
+.subscribe-btn {
+    background-color: #4CAF50;
+}
+
+.tab-link {
+    background: none;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.tab-link:hover,
+.tab-link.active {
+    background-color: #333;
+}
