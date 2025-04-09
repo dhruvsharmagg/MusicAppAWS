@@ -9,11 +9,12 @@
     <h2>📝 Register for Music App</h2>
     
     <!-- Flase message for Register errors -->
-    {% with message = get_flashed_messages() %}
-        {% if messages %}
-        <p style="color: red;"> {{ messages[0] }}</p>
-        {% endif %}
+    {% with messages = get_flashed_messages() %}
+         {% if messages %}
+          <p style="color: red;">{{ messages[0] }}</p>
+         {% endif %}
     {% endwith %}
+
 
     <!-- Register form -->
 

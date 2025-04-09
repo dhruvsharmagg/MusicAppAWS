@@ -18,6 +18,8 @@
     <section id="user" class="tab-content active">
         <h2>Welcome, {{ user }} 🎶</h2>
         <p>This is your music dashboard. Use the tabs above to view your subscriptions or search for new songs.</p>
+         <p><a href="{{ url_for('logout') }}">🚪 Logout</a></p>
+
     </section>
 
     <!-- SUBSCRIBED SECTION -->
@@ -83,6 +85,7 @@
             event.target.classList.add('active');
         }
     </script>
+
 
 </body>
 </html>
