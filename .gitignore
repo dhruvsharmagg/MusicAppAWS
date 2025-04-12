@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 *.zip
 .DS_Store
+.env
+.env
