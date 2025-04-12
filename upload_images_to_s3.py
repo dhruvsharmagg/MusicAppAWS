@@ -1,65 +1,61 @@
 import boto3
 import json
 import requests
+import os
 from dotenv import load_dotenv
-import os 
 
+# Load environment variables from .env file
 load_dotenv()
 
-# -- setup S3 connection --
+# Set up S3 client
+s3_client = boto3.client('s3', region_name='us-east-1')
+BUCKET_NAME = 'cloudcomputingsongimages'
 
-s3 = boto3.client('s3',region_name='us-east-1')
-BUCKET_NAME = 'suyash-music-image-bucket' # name of our bucket
-
-# create bucket
-
-def create_bucket():
+# Create the S3 bucket if it doesn't already exist
+def create_bucket_if_not_exists():
     try:
-        s3.create_bucket(Bucket = BUCKET_NAME)
-        print(f"✅ Bucket '{BUCKET_NAME}' created.")
-        
-    except s3.exceptions.BucketAlreadyOwnedByYou:
-        print(f"ℹ️ Bucket '{BUCKET_NAME}' already exists.")
+        s3_client.create_bucket(Bucket=BUCKET_NAME)
+        print(f"Bucket '{BUCKET_NAME}' created.")
+    except s3_client.exceptions.BucketAlreadyOwnedByYou:
+        print(f"Bucket '{BUCKET_NAME}' already exists.")
 
-# Upload images
-def upload_image():
-    with open("2025a1.json") as f:
-        songs = json.load(f)["songs"]
-    
-    uploaded = set() # this is to avoid duplicate songs
+# Upload images from the JSON file to the S3 bucket
+def upload_images():
+    with open("2025a1.json", "r") as f:
+        data = json.load(f).get("songs", [])
 
-    for song in songs:
+    uploaded_files = set()  # Track uploaded filenames to avoid duplicates
+
+    for song in data:
         image_url = song.get("img_url")
         if not image_url:
             continue
 
-        #Use the image filename from url
-        file_name = image_url.split('/')[-1]
+        filename = image_url.split("/")[-1]  # Extract image file name from URL
 
-        print(file_name)
-
-        if file_name in uploaded:
+        if filename in uploaded_files:
             continue
 
         try:
-            #Download image
+            # Download image
             response = requests.get(image_url, timeout=10)
             if response.status_code == 200:
-
-                s3.put_object(
-                    Bucket = BUCKET_NAME,
-                    Key = file_name,
-                    Body = response.content,
-                    ContentType = 'image/jpeg'
+                # Upload image to S3
+                s3_client.put_object(
+                    Bucket=BUCKET_NAME,
+                    Key=filename,
+                    Body=response.content,
+                    ContentType='image/jpeg'
                 )
-                print(f"🖼️ Uploaded: {file_name}")
-                uploaded.add(file_name)
+                print(f"Uploaded: {filename}")
+                uploaded_files.add(filename)
             else:
-                print(f"⚠️ Failed to download: {image_url}")
+                print(f"Failed to download: {image_url}")
         except Exception as e:
-            print(f"⚠️ Error with {image_url}: {e}")
+            print(f"Error with {image_url}: {e}")
 
-if __name__=="__main__":
-    create_bucket()
-    upload_image()
-    print("✅ All images uploaded to S3.")
+# Run the main logic
+if __name__ == "__main__":
+    create_bucket_if_not_exists()
+    upload_images()
+    print("All images uploaded.")

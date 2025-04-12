@@ -10,31 +10,26 @@ import json
 # Load AWS credentials
 load_dotenv(dotenv_path="/var/www/Code_dhruv/.env") 
 
+# Initialize Flask app
 app = Flask(__name__)
 app.secret_key = "super-secret-key"
 
-# AWS clients
+# Setup AWS services
 dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 s3_client = boto3.client('s3', region_name='us-east-1')
 bucket_name = "cloudcomputingsongimages"
 
-# Tables
+# Reference DynamoDB tables
 login_table = dynamodb.Table('login')
 music_table = dynamodb.Table('music')
 subs_table = dynamodb.Table('subscriptions')
 
-# --------------------------
-# LOGIN
-# --------------------------
+# Login route
 @app.route('/', methods=["GET", "POST"])
 def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        # 🔍 Debug AWS credentials (will show in Apache logs)
-        print("🔐 AWS_ACCESS_KEY_ID:", os.getenv('AWS_ACCESS_KEY_ID'))
-        print("🔐 AWS_SECRET_ACCESS_KEY:", os.getenv('AWS_SECRET_ACCESS_KEY')[:4], "****")
-        print("🔐 AWS_SESSION_TOKEN:", os.getenv('AWS_SESSION_TOKEN')[:15], "...")
 
         response = login_table.get_item(Key={'email': email})
         user = response.get('Item')
@@ -44,17 +39,15 @@ def login():
             session['email'] = user['email']
             return redirect(url_for('main'))
         else:
-            flash('❌ Email or password is incorrect.')
+            flash('Invalid email or password.')
 
     return render_template('login.html')
 
-# --------------------------
-# REGISTER (via Lambda)
-# --------------------------
+# Register via Lambda
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if request.method == "POST":
-        payload = {
+    if request.method == 'POST':
+        data = {
             "email": request.form['email'],
             "username": request.form['username'],
             "password": request.form['password']
@@ -63,44 +56,41 @@ def register():
         try:
             response = requests.post(
                 'https://zyzbozj5o2.execute-api.us-east-1.amazonaws.com/CloudAss1/register',
-                data=json.dumps(payload),
+                data=json.dumps(data),
                 headers={"Content-Type": "application/json"}
             )
-            print("✅ Lambda raw response:", response.text)
-            body = response.json()
 
+            res = response.json()
             if response.status_code == 200:
-                flash("✅ " + body.get("message", "Registered successfully!"))
+                flash(res.get("message", "Registration successful."))
                 return redirect(url_for('login'))
             else:
-                flash("❌ " + body.get("error", "Something went wrong."))
+                flash(res.get("error", "Registration failed."))
 
         except Exception as e:
-            flash(f"❌ Error: {str(e)}")
+            flash(f"Error: {str(e)}")
 
     return render_template("register.html")
 
-# --------------------------
-# DASHBOARD
-# --------------------------
+# Dashboard route
 @app.route('/main')
 def main():
-    if 'username' not in session or 'email' not in session:
+    if 'email' not in session or 'username' not in session:
         return redirect(url_for('login'))
 
     email = session['email']
-    response = music_table.scan()
-    songs = response.get('Items', [])
 
-    sub_response = subs_table.query(
+    music_data = music_table.scan().get('Items', [])
+    subs_data = subs_table.query(
         KeyConditionExpression=boto3.dynamodb.conditions.Key('email').eq(email)
-    )
-    subscribed_titles = set(item['song_title'] for item in sub_response['Items'])
+    ).get('Items', [])
 
-    for song in songs:
-        image_file = song.get('image_url', '')
-        if image_file:
-            filename = image_file.split("/")[-1]
+    subscribed = set(item['song_title'] for item in subs_data)
+
+    for song in music_data:
+        image_path = song.get('image_url', '')
+        if image_path:
+            filename = image_path.split('/')[-1]
             try:
                 url = s3_client.generate_presigned_url(
                     'get_object',
@@ -109,15 +99,13 @@ def main():
                 )
                 song['image_url'] = url
             except:
-                song['image_url'] = ""
-        song['subscribed'] = song['title'] in subscribed_titles
+                song['image_url'] = ''
+        song['subscribed'] = song['title'] in subscribed
 
-    return render_template("main.html", songs=songs, user=session['username'])
+    return render_template("main.html", songs=music_data, user=session['username'])
 
-# --------------------------
-# SUBSCRIBE
-# --------------------------
-@app.route('/subscribe', methods=["POST"])
+# Subscribe to a song
+@app.route('/subscribe', methods=['POST'])
 def subscribe():
     if 'email' not in session:
         return redirect(url_for('login'))
@@ -136,20 +124,20 @@ def subscribe():
             data=json.dumps(payload),
             headers={"Content-Type": "application/json"}
         )
-        result = response.json()
+
         if response.status_code == 200:
-            flash("✅ Subscribed successfully!")
+            flash("Subscription successful.")
         else:
-            flash("❌ " + result.get("error", "Failed to subscribe."))
+            error_msg = response.json().get("error", "Subscription failed.")
+            flash(error_msg)
+
     except Exception as e:
-        flash(f"❌ Error: {str(e)}")
+        flash(f"Error: {str(e)}")
 
     return redirect(url_for('main'))
 
-# --------------------------
-# UNSUBSCRIBE
-# --------------------------
-@app.route('/unsubscribe', methods=["POST"])
+# Unsubscribe from a song
+@app.route('/unsubscribe', methods=['POST'])
 def unsubscribe():
     if 'email' not in session:
         return redirect(url_for('login'))
@@ -167,38 +155,36 @@ def unsubscribe():
             data=json.dumps(payload),
             headers={"Content-Type": "application/json"}
         )
-        result = response.json()
+
         if response.status_code == 200:
-            flash("✅ Unsubscribed successfully!")
+            flash("Unsubscribed successfully.")
         else:
-            flash("❌ " + result.get("error", "Failed to unsubscribe."))
+            error_msg = response.json().get("error", "Unsubscribe failed.")
+            flash(error_msg)
+
     except Exception as e:
-        flash(f"❌ Error: {str(e)}")
+        flash(f"Error: {str(e)}")
 
     return redirect(url_for('main'))
 
-# --------------------------
-# SEARCH SONGS
-# --------------------------
+# Search songs by fields
 @app.route('/search', methods=['GET'])
 def search():
-    if 'username' not in session or 'email' not in session:
+    if 'email' not in session or 'username' not in session:
         return redirect(url_for('login'))
 
-    email = session['email']
     title = request.args.get('title', '').lower()
     artist = request.args.get('artist', '').lower()
     album = request.args.get('album', '').lower()
     year = request.args.get('year', '').lower()
 
     if not (title or artist or album or year):
-        flash("❗ Please enter at least one field to query.")
+        flash("Please enter at least one search field.")
         return render_template("search.html", songs=[], user=session['username'])
 
-    response = music_table.scan()
-    all_songs = response.get('Items', [])
+    songs = music_table.scan().get('Items', [])
 
-    def matches(song):
+    def is_match(song):
         return (
             (not title or title in song.get('title', '').lower()) and
             (not artist or artist in song.get('artist', '').lower()) and
@@ -206,17 +192,17 @@ def search():
             (not year or year in str(song.get('year', '')).lower())
         )
 
-    matched_songs = list(filter(matches, all_songs))
+    filtered_songs = list(filter(is_match, songs))
 
-    sub_response = subs_table.query(
-        KeyConditionExpression=boto3.dynamodb.conditions.Key('email').eq(email)
-    )
-    subscribed_titles = set(item['song_title'] for item in sub_response['Items'])
+    subs = subs_table.query(
+        KeyConditionExpression=boto3.dynamodb.conditions.Key('email').eq(session['email'])
+    ).get('Items', [])
+    subscribed = set(item['song_title'] for item in subs)
 
-    for song in matched_songs:
-        image_file = song.get('image_url', '')
-        if image_file:
-            filename = image_file.split("/")[-1]
+    for song in filtered_songs:
+        image_path = song.get('image_url', '')
+        if image_path:
+            filename = image_path.split('/')[-1]
             try:
                 url = s3_client.generate_presigned_url(
                     'get_object',
@@ -225,22 +211,18 @@ def search():
                 )
                 song['image_url'] = url
             except:
-                song['image_url'] = ""
-        song['subscribed'] = song['title'] in subscribed_titles
+                song['image_url'] = ''
+        song['subscribed'] = song['title'] in subscribed
 
-    return render_template("search.html", songs=matched_songs, user=session['username'])
+    return render_template("search.html", songs=filtered_songs, user=session['username'])
 
-# --------------------------
-# LOGOUT
-# --------------------------
+# Logout and clear session
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("✅ Logged out successfully!")
+    flash("Logged out.")
     return redirect(url_for('login'))
 
-# --------------------------
-# LAUNCH (for local testing only)
-# --------------------------
+# Run app 
 if __name__ == '__main__':
     app.run(debug=True)

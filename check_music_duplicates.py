@@ -20,10 +20,10 @@ print("🔍 Checking for duplicate (title, artist) pairs...\n")
 for (title, artist), entries in duplicates.items():
     if len(entries) > 1:
         found = True
-        print(f"⚠️ Duplicate found: '{title.title()}' by {artist.title()} ({len(entries)} versions)")
+        print(f"Duplicate found: '{title.title()}' by {artist.title()} ({len(entries)} versions)")
         for i, entry in enumerate(entries, 1):
             print(f"  {i}. Album: {entry['album']} | Year: {entry['year']} | Image: {entry['img_url']}")
         print()
 
 if not found:
-    print("✅ No duplicates found. You're good to go!")
+    print("No duplicates found")

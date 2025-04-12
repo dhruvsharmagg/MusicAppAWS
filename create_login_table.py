@@ -1,12 +1,14 @@
 import boto3
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-# Initialize DynamoDB resource
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1')  # Replace with your AWS region
+# Connect to DynamoDB
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 table_name = 'login'
 
+# Try to create the login table if it doesn't exist
 try:
     table = dynamodb.create_table(
         TableName=table_name,
@@ -16,17 +18,15 @@ try:
         AttributeDefinitions=[
             {'AttributeName': 'email', 'AttributeType': 'S'}
         ],
-        BillingMode='PAY_PER_REQUEST'
+        BillingMode='PAY_PER_REQUEST'  # On-demand billing
     )
-
-    print("⏳ Creating table...")
+    print("Creating table...")
     table.wait_until_exists()
-    print("✅ Table 'login' created with on-demand billing mode.")
-
+    print("Table 'login' created successfully.")
 except dynamodb.meta.client.exceptions.ResourceInUseException:
-    print("⚠️ Table already exists.")
+    print("Table already exists.")
 
-# Data from the image
+# List of user entries to insert
 users = [
     {'email': 's40374120@student.rmit.edu.au', 'user_name': 'dhruvsharma0', 'password': '123456'},
     {'email': 's40347661@student.rmit.edu.au', 'user_name': 'harjasthapar1', 'password': '123213'},
@@ -40,9 +40,9 @@ users = [
     {'email': 's4453539@student.rmit.edu.au', 'user_name': 'kajalhule9', 'password': '965946'},
 ]
 
-# Insert entries into DynamoDB
+# Insert each user into the table
 for user in users:
     table.put_item(Item=user)
-    print(f"✅ Inserted user: {user['email']}")
+    print(f"Inserted: {user['email']}")
 
-print("🎉 All 10 users added to 'login' table.")
+print("All users added to the 'login' table.")

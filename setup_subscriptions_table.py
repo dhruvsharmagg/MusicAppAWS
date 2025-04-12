@@ -1,30 +1,36 @@
 import boto3
-
 from dotenv import load_dotenv
 
+# Load environment variables from .env file
 load_dotenv()
 
-dynamodb = boto3.resource('dynamodb' , region_name = 'us-east-1')
+# Initialize DynamoDB connection
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
+# Set the table name
 table_name = 'subscriptions'
 
+# Attempt to create the table
 try:
-
-    table = dynamodb.create_table(
-        TableName = table_name,
-        KeySchema = [
-            {'AttributeName' : 'email', 'KeyType' : 'HASH'},
-            {'AttributeName' : 'song_title', 'KeyType' : 'RANGE'}
+    subscriptions_table = dynamodb.create_table(
+        TableName=table_name,
+        KeySchema=[
+            {'AttributeName': 'email', 'KeyType': 'HASH'},       # Partition key
+            {'AttributeName': 'song_title', 'KeyType': 'RANGE'}  # Sort key
         ],
-        AttributeDefinitions = [
-            {'AttributeName' : 'email', 'AttributeType' : 'S'},
-            {'AttributeName' : 'song_title', 'AttributeType' : 'S'}
+        AttributeDefinitions=[
+            {'AttributeName': 'email', 'AttributeType': 'S'},
+            {'AttributeName': 'song_title', 'AttributeType': 'S'}
         ],
-        ProvisionedThroughput = { 'ReadCapacityUnits' : 5,
-                                 'WriteCapacityUnits' : 5}
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 5,
+            'WriteCapacityUnits': 5
+        }
     )
-    table.wait_until_exists()
-    print("✅ 'subscriptions' table created.")
+
+    # Wait until the table is fully created
+    subscriptions_table.wait_until_exists()
+    print("'subscriptions' table successfully created.")
 
 except dynamodb.meta.client.exceptions.ResourceInUseException:
-    print("ℹ️ Table already exists.")
+    print("The 'subscriptions' table already exists.")

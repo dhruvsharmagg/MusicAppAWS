@@ -1,66 +1,62 @@
 import boto3
 import json
-from dotenv import load_dotenv
 import os
+from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv()
 
-dynamodb = boto3.resource('dynamodb',region_name = 'us-east-1')
+# Initialize DynamoDB resource
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1')
 
-# -----------------------------
-# Step 1: Create music table
-# -----------------------------
-
+# Create the 'music' table if not exists
 try:
-    table = dynamodb.create_table(
-        TableName = 'music',
-        KeySchema = [
-            {'AttributeName' : 'title', 'KeyType' : 'HASH'}, # Partition key
-            {'AttributeName' : 'artist', 'KeyType' : 'RANGE'} # Sort key
-        ], 
-        AttributeDefinitions = [
-            { 'AttributeName' : 'title', 'AttributeType' : 'S'},
-            { 'AttributeName' : 'artist', 'AttributeType' : 'S'},
+    music_table = dynamodb.create_table(
+        TableName='music',
+        KeySchema=[
+            {'AttributeName': 'title', 'KeyType': 'HASH'},   # Primary key
+            {'AttributeName': 'artist', 'KeyType': 'RANGE'}  # Sort key
         ],
-        ProvisionedThroughput = {'ReadCapacityUnits' : 5, 
-                                 'WriteCapacityUnits' : 5}
+        AttributeDefinitions=[
+            {'AttributeName': 'title', 'AttributeType': 'S'},
+            {'AttributeName': 'artist', 'AttributeType': 'S'}
+        ],
+        ProvisionedThroughput={
+            'ReadCapacityUnits': 5,
+            'WriteCapacityUnits': 5
+        }
     )
-    table.wait_until_exists()
-    print("✅ 'music' table created.")
+    music_table.wait_until_exists()
+    print("Table 'music' has been created successfully.")
 
 except dynamodb.meta.client.exceptions.ResourceInUseException:
-    table = dynamodb.Table('music')
-    print("ℹ️ 'music' table already exists.")
+    music_table = dynamodb.Table('music')
+    print("Table 'music' already exists.")
 
-# -----------------------------
-# Step 2: Load data from 2025a1.json
-# -----------------------------
+# Insert records from JSON file into table
+with open('2025a1.json', 'r') as json_file:
+    content = json.load(json_file)
+    entries = content.get('songs', [])
 
-with open('2025a1.json') as f:
-    data = json.load(f)
-    songs = data['songs']
+processed = set()
 
-seen_songs = set() # Filter duplicates
+with music_table.batch_writer() as writer:
+    for entry in entries:
+        track_key = (entry['title'], entry['artist'])
 
-with table.batch_writer() as batch:
-    for song in songs:
-        song_key = (song['title'],song['artist'])
-
-        if song_key in seen_songs:
-            print(f"⚠️ Skipping duplicate: {song['title']} by {song['artist']}")
+        if track_key in processed:
+            print(f"Duplicate found, skipping: {entry['title']} - {entry['artist']}")
             continue
 
-        seen_songs.add(song_key)
+        processed.add(track_key)
 
-        batch.put_item(
-            Item = {
-                'title' : song['title'],
-                'artist' : song['artist'],
-                'year' : song['year'],
-                'album' : song['album'],
-                'image_url' : song['img_url']
-            }
-        )
-        print(f"🎵 Loaded: {song['title']} by {song['artist']}")
+        writer.put_item(Item={
+            'title': entry['title'],
+            'artist': entry['artist'],
+            'year': entry['year'],
+            'album': entry['album'],
+            'image_url': entry['img_url']
+        })
+        print(f"Inserted: {entry['title']} by {entry['artist']}")
 
-print("✅ All songs loaded into 'music' table.")
+print("Data import complete.")
