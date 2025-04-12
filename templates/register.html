@@ -4,35 +4,34 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='register.css') }}">
+
 </head>
 <body>
-    <h2>📝 Register for Music App</h2>
-    
-    <!-- Flase message for Register errors -->
-    {% with messages = get_flashed_messages() %}
-         {% if messages %}
-          <p style="color: red;">{{ messages[0] }}</p>
-         {% endif %}
-    {% endwith %}
+    <div class="register-container">
+        <h2>📝 Register for Music App</h2>
+        
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <p class="flash-message">{{ messages[0] }}</p>
+            {% endif %}
+        {% endwith %}
 
+        <form method="POST">
+            <label>Email:</label><br>
+            <input type="email" name="email" required><br>
 
-    <!-- Register form -->
+            <label>Username:</label><br>
+            <input type="text" name="username" required><br>
 
-    <form method="POST">
+            <label>Password:</label><br>
+            <input type="password" name="password" required><br>
 
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+            <button type="submit">Register</button>
+        </form>
 
-        <label>Username:</label><br>
-        <input type="text" name="username" required><br><br>
-
-        <label>Password:</label><br>
-        <input type="password" name="password" required><br><br>
-
-        <button type="submit">Register</button>
-    </form>
-
-    <p>Already have an account? <a href="{{ url_for('login')}}">Login here</a></p>
-    
+        <p>Already have an account? <a href="{{ url_for('login')}}">Login here</a></p>
+    </div>
 </body>
+
 </html>

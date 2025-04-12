@@ -4,30 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Page</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 </head>
 <body>
-    <h2>Login to Music App</h2>
-    <!-- Flase message for login errors -->
-     {% with messages = get_flashed_messages() %}
-        {% if messages %}
-        <p style="color: red;">{{ messages[0] }}</p>
-        {% endif %}
-    {% endwith %}
+    <div class="login-container">
+        <h2>Login to Music App</h2>
 
-    <!-- Login form -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <p class="flash-message">{{ messages[0] }}</p>
+            {% endif %}
+        {% endwith %}
 
-    <form method="POST">
+        <form method="POST">
+            <label>Email:</label><br>
+            <input type="email" name="email" required><br>
 
-        <label>Email:</label><br>
-        <input type="email" name="email" required><br><br>
+            <label>Password:</label><br>
+            <input type="password" name="password"><br>
 
-        <label>Password:</label><br>
-        <input type="password" name="password"><br><br>
+            <button type="submit">Login</button>
+        </form>
 
-        <button type="submit">Login</button>
-    </form>
-    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
-
+        <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+    </div>
 
 </body>
 </html>
