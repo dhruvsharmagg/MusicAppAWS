@@ -3,12 +3,12 @@ import boto3.dynamodb.conditions
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import requests
 import boto3
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 import os
 import json
 
 # Load AWS credentials
-load_dotenv(dotenv_path="/var/www/Code_dhruv/.env") 
+#load_dotenv(dotenv_path="/var/www/Code_dhruv/.env") 
 
 # Initialize Flask app
 app = Flask(__name__)
